@@ -1,3 +1,5 @@
 /.vs
 /.vscode
 /Sokoban.code-workspace
+main_file
+build/*

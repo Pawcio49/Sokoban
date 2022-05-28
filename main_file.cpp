@@ -1,19 +1,3 @@
-/*
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-
 #define GLM_FORCE_RADIANS
 
 #include <GL/glew.h>
@@ -28,17 +12,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "lodepng.h"
 #include "shaderprogram.h"
 
-using namespace glm;
+#include "logic/filehandling.h"
+#include "logic/movement.h"
+#include "enumeration/worldElements.h"
 
-mat4 M_sun;
-mat4 M_torus;
-mat4 M_cube;
-mat4 M_wheel;
-mat4 M;
-mat4 V;
-mat4 P;
-float speed = 100.0;
-float wheel_speed = 0;
+glm::mat4 M;
+glm::mat4 V;
+glm::mat4 P;
 
 //Error processing callback procedure
 void error_callback(int error, const char* description) {
@@ -58,277 +38,54 @@ void freeOpenGLProgram(GLFWwindow* window) {
 	//************Place any code here that needs to be executed once, after the main loop ends************
 }
 
-//Drawing procedure
-/* Obracajace sie slonca
-void drawScene(GLFWwindow* window, float angle) {
-	//************Place any code here that draws something inside the window******************l
+void drawScene(GLFWwindow* window, int **matrix) {
 	glClearColor(0.2, 0.4, 0.7, 0.5);
 	glEnable(GL_DEPTH_TEST);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	V = lookAt(vec3(0.0f, 0.0f, -5.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
-	P = perspective(50.0f * PI / 180.0f, 1.0f, 1.0f, 50.0f);
+	V = glm::lookAt(glm::vec3(0.0f, 0.0f, 40.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	P = glm::perspective(50.0f * PI / 180.0f, 1.0f, 1.0f, 5000.0f);
 
 	spLambert->use();
 	glUniformMatrix4fv(spLambert->u("P"), 1, false, value_ptr(P));
 	glUniformMatrix4fv(spLambert->u("V"), 1, false, value_ptr(V));
 
+	for(int i=0; i<MAX_MAP_SIZE; i++){
+		for(int j=0; j<MAX_MAP_SIZE; j++){
+				M = glm::mat4(1.0f);
+				//M = glm::scale(M, glm::vec3(0.05f, 0.1f, 0.05f));
+				M = glm::translate(M, glm::vec3(i*2-MAX_MAP_SIZE+1, j*2-MAX_MAP_SIZE+1, 0.0f));
 
-	M_sun = mat4(1.0f);
-	glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(M_sun));
-	glUniform4f(spLambert->u("color"), 0.2, 0.6, 0.45, 0.8);
-	static Models::Sphere sun(0.5, 36, 36);
-	sun.drawSolid();
-
-	M = rotate(M_sun, angle * PI / 180.0f, vec3(0.0f, 1.0f, 0.0f));
-	M = translate(M, vec3(1.5f, 0.0f, 0.0f));
-	glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(M));
-	glUniform4f(spLambert->u("color"), 0.8, 0.1, 0.45, 0.8);
-	static Models::Sphere planet1(0.2, 36, 36);
-	planet1.drawSolid();
-
-	M = rotate(M, angle * PI / 180.0f, vec3(0.0f, 1.0f, 0.0f));
-	M = translate(M, vec3(0.5f, 0.0f, 0.0f));
-	glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(M));
-	glUniform4f(spLambert->u("color"), 0.8, 0.6, 0.45, 0.8);
-	static Models::Sphere moon1(0.1, 36, 36);
-	moon1.drawSolid();
-
-	M = rotate(M_sun, angle * PI / 180.0f, vec3(0.0f, 0.0f, 1.0f));
-	M = translate(M, vec3(2.0f, 0.0f, 0.0f));
-	glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(M));
-	glUniform4f(spLambert->u("color"), 0.8, 0.1, 0.45, 0.8);
-	static Models::Sphere planet2(0.25, 36, 36);
-	planet2.drawSolid();
-
-	M = rotate(M, angle * PI / 180.0f, vec3(1.0f, 0.0f, 0.0f));
-	M = translate(M, vec3(0.0f, 0.3f, 0.0f));
-	glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(M));
-	glUniform4f(spLambert->u("color"), 0.8, 0.6, 0.45, 0.8);
-	static Models::Sphere moon2(0.07, 36, 36);
-	moon2.drawSolid();
-
-	glfwSwapBuffers(window);
-}*/
-
-/*void drawCog(mat4 M_torus, float angle, int is_left) {
-
-	glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(M_torus));
-	glUniform4f(spLambert->u("color"), 0.2, 0.6, 0.45, 0.8);
-	Models::torus.drawSolid();
-
-	for (int i = 0; i < 12; i++) {
-		M = rotate(M_torus, 30 * i * PI / 180.0f, vec3(0.0f, 0.0f, 1.0f));
-		M = translate(M, vec3(1.1f, 0.0f, 0.0f));
-		M = scale(M, vec3(0.1f, 0.1f, 0.1f));
-		glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(M));
-		glUniform4f(spLambert->u("color"), 0.2, 0.6, 0.45, 0.8);
-		Models::cube.drawSolid();
+			switch (matrix[i][j])
+			{
+			case worldElements::FLOOR:
+				glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(M));
+				glUniform4f(spLambert->u("color"), 0.2, 0.6, 0.45, 0.8);
+				Models::cube.drawSolid();
+				break;
+			case worldElements::WALL:
+				glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(M));
+				glUniform4f(spLambert->u("color"), 1.0, 0.6, 1.0, 0.8);
+				Models::cube.drawSolid();
+				break;
+			case worldElements::TARGET:
+				glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(M));
+				glUniform4f(spLambert->u("color"), 0.0, 0.6, 1.0, 0.8);
+				Models::cube.drawSolid();
+				break;
+			default:
+				break;
+			}
+		}
 	}
-}*/
 
-void drawCog(mat4 M_torus) {
-
-	glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(M_torus));
-	glUniform4f(spLambert->u("color"), 0.2, 0.6, 0.45, 0.8);
-	Models::torus.drawSolid();
-
-	for (int i = 0; i < 12; i++) {
-		M = rotate(M_torus, 30 * i * PI / 180.0f, vec3(0.0f, 0.0f, 1.0f));
-		M = translate(M, vec3(1.1f, 0.0f, 0.0f));
-		M = scale(M, vec3(0.1f, 0.1f, 0.1f));
-		glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(M));
-		glUniform4f(spLambert->u("color"), 0.2, 0.6, 0.45, 0.8);
-		Models::cube.drawSolid();
-	}
-}
-
-
-void drawScene(GLFWwindow* window, float angle) {
-	//************Place any code here that draws something inside the window******************l
-	glClearColor(0.2, 0.4, 0.7, 0.5);
-	glEnable(GL_DEPTH_TEST);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	V = lookAt(vec3(0.0f, 0.0f, -5.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
-	P = perspective(50.0f * PI / 180.0f, 1.0f, 1.0f, 500000.0f);
-
-	spLambert->use();
-	glUniformMatrix4fv(spLambert->u("P"), 1, false, value_ptr(P));
-	glUniformMatrix4fv(spLambert->u("V"), 1, false, value_ptr(V));
-
-	M_torus = mat4(1.0f);
-	M_torus = translate(M_torus, vec3(-1.1f, 0.0f, 0.0f));
-	M_torus = rotate(M_torus, angle * PI / 180.0f, vec3(0.0f, 0.0f, 1.0f));
-	drawCog(M_torus);
 	
-	/*M_torus = scale(M_torus, vec3(0.3f, 0.3f, 0.3f));
-	M_torus = rotate(M_torus, -2*angle * PI / 180.0f, vec3(0.0f, 0.0f, 1.0f));
-	drawCog(M_torus);*/
 
-	M_torus = mat4(1.0f);
-	M_torus = translate(M_torus, vec3(1.1f, 0.0f, 0.0f));
-	M_torus = rotate(M_torus, (-angle + 15) * PI / 180.0f, vec3(0.0f, 0.0f, 1.0f));
-	drawCog(M_torus);
-	
-	/*M_torus = scale(M_torus, vec3(0.3f, 0.3f, 0.3f));
-	M_torus = rotate(M_torus, 2*angle * PI / 180.0f, vec3(0.0f, 0.0f, 1.0f));
-	drawCog(M_torus);*/
-
-	/*M_torus = mat4(1.0f);
-	M_torus = rotate(M_torus, 90 * PI / 180.0f, vec3(1.0f, 0.0f, 0.0f));
-	M_torus = rotate(M_torus, -angle * PI / 180.0f, vec3(0.0f, 0.0f, 1.0f));
-	glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(M_torus));
-	glUniform4f(spLambert->u("color"), 0.2, 0.6, 0.45, 0.8);
-	Models::torus.drawSolid();*/
 
 	glfwSwapBuffers(window);
 }
 
-/* plaskie torusy
-void drawScene(GLFWwindow* window, float angle) {
-	//************Place any code here that draws something inside the window******************l
-	glClearColor(0.2, 0.4, 0.7, 0.5);
-	glEnable(GL_DEPTH_TEST);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	V = lookAt(vec3(0.0f, 0.0f, 8.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
-	P = perspective(50.0f * PI / 180.0f, 1.0f, 1.0f, 500000.0f);
-
-	spLambert->use();
-	glUniformMatrix4fv(spLambert->u("P"), 1, false, value_ptr(P));
-	glUniformMatrix4fv(spLambert->u("V"), 1, false, value_ptr(V));
-
-	bool rotateLeft = true;
-
-	for (int i = 0; i < 6; i++) {
-		M_torus = mat4(1.0f);
-		M_torus = rotate(M_torus, 60*i * PI / 180.0f, vec3(0.0f, 0.0f, 1.0f));
-		M_torus = translate(M_torus, vec3(-1.0f, -2.0f, 0.0f));
-		if (rotateLeft) {
-			M_torus = rotate(M_torus,  15 + angle * PI / 180.0f, vec3(0.0f, 0.0f, 1.0f));
-			rotateLeft = false;
-		}
-		else {
-			M_torus = rotate(M_torus, -angle * PI / 180.0f, vec3(0.0f, 0.0f, 1.0f));
-			rotateLeft = true;
-		}
-		drawCog(M_torus);
-	}
-
-	glfwSwapBuffers(window);
-}*/
-
-// pochylone torusy
-/*void drawScene(GLFWwindow* window, float angle) {
-	//************Place any code here that draws something inside the window******************l
-	glClearColor(0.2, 0.4, 0.7, 0.5);
-	glEnable(GL_DEPTH_TEST);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	V = lookAt(vec3(0.0f, 4.0f, 8.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
-	P = perspective(50.0f * PI / 180.0f, 1.0f, 1.0f, 500000.0f);
-
-	spLambert->use();
-	glUniformMatrix4fv(spLambert->u("P"), 1, false, value_ptr(P));
-	glUniformMatrix4fv(spLambert->u("V"), 1, false, value_ptr(V));
-
-	bool rotateLeft = true;
-
-	for (int i = 0; i < 6; i++) {
-		M_torus = mat4(1.0f);
-		//ponizsza linia, zeby dodatkowo sie wszystko obracalo
-		//M_torus = rotate(M_torus, angle * PI / 180.0f, vec3(0.0f, 1.0f, 0.0f));
-		M_torus = rotate(M_torus, 60 * i * PI / 180.0f, vec3(0.0f, 1.0f, 0.0f));
-		M_torus = translate(M_torus, vec3(0.0, 0.0f, -2.0f));
-		if (rotateLeft) {
-			M_torus = rotate(M_torus, 15 + angle * PI / 180.0f, vec3(0.0f, 0.0f, 1.0f));
-			rotateLeft = false;
-		}
-		else {
-			M_torus = rotate(M_torus, -angle * PI / 180.0f, vec3(0.0f, 0.0f, 1.0f));
-			rotateLeft = true;
-		}
-		drawCog(M_torus);
-	}
-
-	glfwSwapBuffers(window);
-}*/
-
-/*void drawScene(GLFWwindow* window, float angle, float wheel_angle, float const_wheel_angle) {
-	//************Place any code here that draws something inside the window******************l
-	glClearColor(0.2, 0.4, 0.7, 0.5);
-	glEnable(GL_DEPTH_TEST);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	V = lookAt(vec3(-4.0f, 1.0f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
-	P = perspective(50.0f * PI / 180.0f, 1.0f, 1.0f, 500000.0f);
-
-	spLambert->use();
-	glUniformMatrix4fv(spLambert->u("P"), 1, false, value_ptr(P));
-	glUniformMatrix4fv(spLambert->u("V"), 1, false, value_ptr(V));
-
-	M = mat4(1.0f);
-	M = rotate(M, angle * PI / 180.0f, vec3(0.0f, 1.0f, 0.0f));
-
-	M_cube = scale(M, vec3(1.5f, 0.125f, 1.0f));
-	glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(M_cube));
-	glUniform4f(spLambert->u("color"), 0.2, 0.6, 0.45, 0.8);
-	Models::cube.drawSolid();
-
-	static Models::Torus wheel(0.3, 0.1, 36, 36);
-
-	M_wheel = translate(M, vec3(1.5f, 0.0f, 1.0f));
-	M_wheel = rotate(M_wheel, const_wheel_angle * PI / 180.f, vec3(1.0f, 0.0f, 0.0f));
-	M_wheel = rotate(M_wheel, wheel_angle * PI / 180.f, vec3(0.0f, 1.0f, 0.0f));
-	glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(M_wheel));
-	glUniform4f(spLambert->u("color"), 0.2, 0.6, 0.45, 0.8);
-	wheel.drawSolid();
-
-	M_wheel = translate(M, vec3(-1.5f, 0.0f, 1.0f));
-	M_wheel = rotate(M_wheel, const_wheel_angle * PI / 180.f, vec3(1.0f, 0.0f, 0.0f));
-	glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(M_wheel));
-	glUniform4f(spLambert->u("color"), 0.2, 0.6, 0.45, 0.8);
-	wheel.drawSolid();
-
-	M_wheel = translate(M, vec3(1.5f, 0.0f, -1.0f));
-	M_wheel = rotate(M_wheel, const_wheel_angle * PI / 180.f, vec3(1.0f, 0.0f, 0.0f));
-	M_wheel = rotate(M_wheel, wheel_angle * PI / 180.f, vec3(0.0f, 1.0f, 0.0f));
-	glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(M_wheel));
-	glUniform4f(spLambert->u("color"), 0.2, 0.6, 0.45, 0.8);
-	wheel.drawSolid();
-
-	M_wheel = translate(M, vec3(-1.5f, 0.0f, -1.0f));
-	M_wheel = rotate(M_wheel, const_wheel_angle * PI / 180.f, vec3(1.0f, 0.0f, 0.0f));
-	glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(M_wheel));
-	glUniform4f(spLambert->u("color"), 0.2, 0.6, 0.45, 0.8);
-	wheel.drawSolid();
-
-	glfwSwapBuffers(window);
-}*/
-
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-	if (action == GLFW_PRESS) {
-		if (key == GLFW_KEY_LEFT)
-			speed = -30.14;
-		else if (key == GLFW_KEY_RIGHT)
-			speed = 30.14;
-	}
-	else if (action == GLFW_RELEASE) {
-		speed = 0;
-		
-	}
-
-	if (action == GLFW_PRESS) {
-		if (key == GLFW_KEY_D)
-			wheel_speed = -80.14;
-		else if (key == GLFW_KEY_A)
-			wheel_speed = 80.14;
-	}
-	else if (action == GLFW_RELEASE) {
-		wheel_speed = 0;
-	}
-}
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {}
 
 int main(void)
 {
@@ -360,21 +117,12 @@ int main(void)
 
 	initOpenGLProgram(window); //Call initialization procedure
 
-	float angle = 0;
-	float wheel_angle = 0;
-	float const_wheel_angle = 0;
-	float const_wheel_speed = 100;
-	glfwSetTime(0);
+	File_data file_data = read_new_map();
 
 	//Main application loop
 	while (!glfwWindowShouldClose(window)) //As long as the window shouldnt be closed yet...
 	{
-		angle += speed * glfwGetTime();
-		wheel_angle += wheel_speed * glfwGetTime();
-		const_wheel_angle += const_wheel_speed * glfwGetTime();
-		glfwSetTime(0);
-		//drawScene(window, angle, wheel_angle, const_wheel_angle); //Execute drawing procedure
-		drawScene(window, angle);
+		drawScene(window, file_data.matrix);
 		glfwPollEvents(); //Process callback procedures corresponding to the events that took place up to now
 
 	}
