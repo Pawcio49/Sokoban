@@ -22,5 +22,9 @@ Place, Fifth Floor, Boston, MA  02110 - 1301  USA
 
 const float PI = 3.141592653589793f;
 const int MAX_MAP_SIZE = 12;
+const float RIGHT_ANGLE = 90.0f;
+const float CAMERA_ROTATE_SPEED = 50.0f;
+const float CAMERA_ZOOM_SPEED = 5.0f;
+const float STARTING_CAMERA_ZOOM = 40.0f;
 
 #endif
