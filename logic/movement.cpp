@@ -96,9 +96,9 @@ void Player::move_forward(int **matrix,std::vector<Crate> &crate){
         return;
     }
     if(matrix[temp_x][temp_y]==2){
-        if(matrix[temp_x_crate][temp_x_crate]!=1){
+        if(matrix[temp_x_crate][temp_y_crate]!=1){
             this->target_x=0.f;
-            this->target_y=0.f;      
+            this->target_y=0.f;   
             return;
         }else{
             for(int i=0;i<crate.size();i++){
@@ -114,6 +114,9 @@ void Player::move_forward(int **matrix,std::vector<Crate> &crate){
 	
 }
 void Player::rotate_left(){
+    if(this->lock){
+        return;
+    }
     if(this->direction==0){
         this->direction=3;
     }else{
@@ -122,6 +125,9 @@ void Player::rotate_left(){
 	this->position = glm::rotate(this->position,90.0f*PI/180.0f,glm::vec3(0.0f,1.0f,0.0f));	
 }
 void Player::rotate_right(){
+    if(this->lock){
+        return;
+    }
 	this->direction=(this->direction+1)%4;
     this->position = glm::rotate(this->position,-90.0f*PI/180.0f,glm::vec3(0.0f,1.0f,0.0f));	
 }

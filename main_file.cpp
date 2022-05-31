@@ -12,10 +12,12 @@
 #include "allmodels.h"
 #include "lodepng.h"
 #include "shaderprogram.h"
+#include "cmath"
+
 #include "logic/filehandling.h"
 #include "logic/movement.h"
 #include "enumeration/worldElements.h"
-#include <algorithm>
+#include "camera/camera.h"
 
 glm::mat4 M;
 glm::mat4 V;
@@ -25,7 +27,12 @@ std::vector<Crate> crate;
 File_data file_data; 
 float aspectRatio = 1;
 //Error processing callback procedure
-void error_callback(int error, const char* description) {
+struct CameraSpeed cameraSpeed;
+struct CameraAngle cameraAngle;
+
+// Error processing callback procedure
+void error_callback(int error, const char *description)
+{
 	fputs(description, stderr);
 }
 
@@ -43,21 +50,22 @@ void initOpenGLProgram(GLFWwindow* window) {
 	initShaders();
 	glfwSetWindowSizeCallback(window,windowResizeCallback);
 	//************Place any code here that needs to be executed once, at the program start************
-
 }
 
-//Release resources allocated by the program
-void freeOpenGLProgram(GLFWwindow* window) {
+// Release resources allocated by the program
+void freeOpenGLProgram(GLFWwindow *window)
+{
 	freeShaders();
 	//************Place any code here that needs to be executed once, after the main loop ends************
 }
 
-void drawScene(GLFWwindow* window, int **matrix,int **goals) {
+void drawScene(GLFWwindow *window, int **matrix, struct CameraAngle cameraAngle, int **goals)
+{
 	glClearColor(0.2, 0.4, 0.7, 0.5);
 	glEnable(GL_DEPTH_TEST);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	V = glm::lookAt(glm::vec3(0.0f, 0.0f, 40.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	V = glm::lookAt(glm::vec3(0.0f, 0.0f, cameraAngle.zoom), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	P = glm::perspective(50.0f * PI / 180.0f, 1.0f, 1.0f, 5000.0f);
 
 	spLambert->use();
@@ -69,12 +77,14 @@ void drawScene(GLFWwindow* window, int **matrix,int **goals) {
 		    crate[i].render();
 	    }
     }
+    M = glm::rotate(M, -cameraAngle.horizontal*PI/180, glm::vec3(0.0f,1.0f,0.0f));
+    M = glm::rotate(M, -cameraAngle.vertical*PI/180, glm::vec3(1.0f,0.0f,0.0f));
 	for(int i=0; i<MAX_MAP_SIZE; i++){
 		for(int j=0; j<MAX_MAP_SIZE; j++){
 				M = glm::mat4(1.0f);
 				//M = glm::scale(M, glm::vec3(0.05f, 0.1f, 0.05f));
+                
 				M = glm::translate(M, glm::vec3(i*2-MAX_MAP_SIZE+1, j*2-MAX_MAP_SIZE+1, 0.0f));
-
 			switch (matrix[i][j])
 			{
 			case 2:
@@ -86,6 +96,9 @@ void drawScene(GLFWwindow* window, int **matrix,int **goals) {
 			case worldElements::WALL:
 				glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(M));
 				glUniform4f(spLambert->u("color"), 1.0, 0.6, 1.0, 0.8);
+				Models::cube.drawSolid();
+				M = glm::translate(M, glm::vec3(0.0f, 0.0f, 2.0f));
+				glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(M));
 				Models::cube.drawSolid();
 				break;
 			}
@@ -99,9 +112,6 @@ void drawScene(GLFWwindow* window, int **matrix,int **goals) {
             }
 		}
 	}
-
-	
-
 
 	glfwSwapBuffers(window);
 }
@@ -120,17 +130,24 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	    }
     
         }
+		cameraSpeed = changeCameraSpeedOnPress(key, cameraSpeed);
+	if (action == GLFW_PRESS) {
+	}
+	else if (action == GLFW_RELEASE) {
+		cameraSpeed = changeCameraSpeedOnRelease(key, cameraSpeed);
+	}
+}
 
     }
-}
+
 
 int main(void)
 {
-	GLFWwindow* window; //Pointer to object that represents the application window
-	glfwSetErrorCallback(error_callback);//Register error processing callback procedure
+	GLFWwindow *window;					  // Pointer to object that represents the application window
+	glfwSetErrorCallback(error_callback); // Register error processing callback procedure
 
-
-	if (!glfwInit()) { //Initialize GLFW library
+	if (!glfwInit())
+	{ // Initialize GLFW library
 		fprintf(stderr, "Can't initialize GLFW.\n");
 		exit(EXIT_FAILURE);
 	}
@@ -144,16 +161,17 @@ int main(void)
 		exit(EXIT_FAILURE);
 	}
 
-	glfwMakeContextCurrent(window); //Since this moment OpenGL context corresponding to the window is active and all OpenGL calls will refer to this context.
-	glfwSwapInterval(1); //During vsync wait for the first refresh
+	glfwMakeContextCurrent(window); // Since this moment OpenGL context corresponding to the window is active and all OpenGL calls will refer to this context.
+	glfwSwapInterval(1);			// During vsync wait for the first refresh
 
 	GLenum err;
-	if ((err = glewInit()) != GLEW_OK) { //Initialize GLEW library
+	if ((err = glewInit()) != GLEW_OK)
+	{ // Initialize GLEW library
 		fprintf(stderr, "Can't initialize GLEW: %s\n", glewGetErrorString(err));
 		exit(EXIT_FAILURE);
 	}
 
-	initOpenGLProgram(window); //Call initialization procedure
+	initOpenGLProgram(window); // Call initialization procedure
 
 	file_data = read_new_map();
 	player = Player(3,3);
@@ -165,15 +183,19 @@ int main(void)
         }
     }
 //Main application loop
-	while (!glfwWindowShouldClose(window)) //As long as the window shouldnt be closed yet...
+	cameraSpeed = initCameraSpeed();
+	cameraAngle = initCameraAngle();
+	glfwSetTime(0);
+	while (!glfwWindowShouldClose(window)) // As long as the window shouldnt be closed yet...
 	{
-		drawScene(window, file_data.matrix,file_data.goals);
-		glfwPollEvents(); //Process callback procedures corresponding to the events that took place up to now
-
+		cameraAngle = changeCameraAngle(cameraAngle, cameraSpeed, glfwGetTime());
+		glfwSetTime(0);
+		drawScene(window, file_data.matrix,cameraAngle,file_data.goals);
+		glfwPollEvents(); // Process callback procedures corresponding to the events that took place up to now
 	}
 	freeOpenGLProgram(window);
 
-	glfwDestroyWindow(window); //Delete OpenGL context and the window.
-	glfwTerminate(); //Free GLFW resources
+	glfwDestroyWindow(window); // Delete OpenGL context and the window.
+	glfwTerminate();		   // Free GLFW resources
 	exit(EXIT_SUCCESS);
 }
