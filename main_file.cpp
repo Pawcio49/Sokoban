@@ -1,3 +1,4 @@
+#include <glm/ext/matrix_clip_space.hpp>
 #define GLM_FORCE_RADIANS
 
 #include <GL/glew.h>
@@ -11,23 +12,36 @@
 #include "allmodels.h"
 #include "lodepng.h"
 #include "shaderprogram.h"
-
 #include "logic/filehandling.h"
 #include "logic/movement.h"
 #include "enumeration/worldElements.h"
+#include <algorithm>
 
 glm::mat4 M;
 glm::mat4 V;
 glm::mat4 P;
-
+Player player;
+std::vector<Crate> crate;
+File_data file_data; 
+float aspectRatio = 1;
 //Error processing callback procedure
 void error_callback(int error, const char* description) {
 	fputs(description, stderr);
 }
 
+void windowResizeCallback(GLFWwindow* window,int width,int height) {
+    if (height<500 || width<500){
+        return;
+    }
+
+	glViewport(0, 0, width, height);
+
+}
+
 //Initialization code procedure
 void initOpenGLProgram(GLFWwindow* window) {
 	initShaders();
+	glfwSetWindowSizeCallback(window,windowResizeCallback);
 	//************Place any code here that needs to be executed once, at the program start************
 
 }
@@ -38,7 +52,7 @@ void freeOpenGLProgram(GLFWwindow* window) {
 	//************Place any code here that needs to be executed once, after the main loop ends************
 }
 
-void drawScene(GLFWwindow* window, int **matrix) {
+void drawScene(GLFWwindow* window, int **matrix,int **goals) {
 	glClearColor(0.2, 0.4, 0.7, 0.5);
 	glEnable(GL_DEPTH_TEST);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -49,7 +63,12 @@ void drawScene(GLFWwindow* window, int **matrix) {
 	spLambert->use();
 	glUniformMatrix4fv(spLambert->u("P"), 1, false, value_ptr(P));
 	glUniformMatrix4fv(spLambert->u("V"), 1, false, value_ptr(V));
-
+	if(!player.lock){
+        player.render();
+        for(int i=0;i<crate.size();i++){
+		    crate[i].render();
+	    }
+    }
 	for(int i=0; i<MAX_MAP_SIZE; i++){
 		for(int j=0; j<MAX_MAP_SIZE; j++){
 				M = glm::mat4(1.0f);
@@ -58,6 +77,7 @@ void drawScene(GLFWwindow* window, int **matrix) {
 
 			switch (matrix[i][j])
 			{
+			case 2:
 			case worldElements::FLOOR:
 				glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(M));
 				glUniform4f(spLambert->u("color"), 0.2, 0.6, 0.45, 0.8);
@@ -68,14 +88,15 @@ void drawScene(GLFWwindow* window, int **matrix) {
 				glUniform4f(spLambert->u("color"), 1.0, 0.6, 1.0, 0.8);
 				Models::cube.drawSolid();
 				break;
-			case worldElements::TARGET:
-				glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(M));
-				glUniform4f(spLambert->u("color"), 0.0, 0.6, 1.0, 0.8);
-				Models::cube.drawSolid();
-				break;
-			default:
-				break;
 			}
+            switch(goals[i][j]){
+                case 1:
+                    M = glm::translate(M, glm::vec3(0.f,0.f, 0.8f));
+                    glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(M));
+				    glUniform4f(spLambert->u("color"), 0.0, 0.6, 1.0, 0.8);
+				    Models::torus.drawSolid();
+				break;
+            }
 		}
 	}
 
@@ -85,7 +106,23 @@ void drawScene(GLFWwindow* window, int **matrix) {
 	glfwSwapBuffers(window);
 }
 
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {}
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+	if(!player.lock){
+        if(action == GLFW_REPEAT || action == GLFW_PRESS){
+	    if(key == GLFW_KEY_LEFT){
+		    player.rotate_left();
+	    }
+	    if(key == GLFW_KEY_RIGHT){
+		    player.rotate_right();
+	    }
+	    if(key == GLFW_KEY_UP){
+		    player.move_forward(file_data.matrix,crate);
+	    }
+    
+        }
+
+    }
+}
 
 int main(void)
 {
@@ -97,10 +134,11 @@ int main(void)
 		fprintf(stderr, "Can't initialize GLFW.\n");
 		exit(EXIT_FAILURE);
 	}
-
-	window = glfwCreateWindow(500, 500, "OpenGL", NULL, NULL);  //Create a window 500pxx500px titled "OpenGL" and an OpenGL context associated with it.
+	window = glfwCreateWindow(900, 900, "Sokoban", NULL, NULL);  //Create a window 500pxx500px titled "OpenGL" and an OpenGL context associated with it.
 	glfwSetKeyCallback(window, key_callback);
-	if (!window) //If no window is opened then close the program
+	
+
+    if (!window) //If no window is opened then close the program
 	{
 		glfwTerminate();
 		exit(EXIT_FAILURE);
@@ -117,12 +155,19 @@ int main(void)
 
 	initOpenGLProgram(window); //Call initialization procedure
 
-	File_data file_data = read_new_map();
-
-	//Main application loop
+	file_data = read_new_map();
+	player = Player(3,3);
+    for(int i=0;i<12;i++){
+        for(int j=0;j<12;j++){
+            if(file_data.matrix[i][j]==2){
+                crate.push_back(Crate(i,j));
+            }
+        }
+    }
+//Main application loop
 	while (!glfwWindowShouldClose(window)) //As long as the window shouldnt be closed yet...
 	{
-		drawScene(window, file_data.matrix);
+		drawScene(window, file_data.matrix,file_data.goals);
 		glfwPollEvents(); //Process callback procedures corresponding to the events that took place up to now
 
 	}

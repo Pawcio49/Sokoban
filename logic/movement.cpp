@@ -1,138 +1,194 @@
-//
-// Created by joulupukki on 10.05.2021.
-//
-
 #include "movement.h"
+#include <glm/ext/matrix_transform.hpp>
 
-Hero find_hero(int **matrix){
-    Hero hero;
-    for(int i=0; i<12; i++){
-        for(int j=0; j<12; j++){
-            if(matrix[i][j] == 4){
-                hero.i = i;
-                hero.j = j;
-                hero.target_place = 0;
-            } else if(matrix[i][j] == 5) {
-                hero.i = i;
-                hero.j = j;
-                hero.target_place = 1;
+Player::Player(){
+	this->position = glm::mat4(1.0f);	
+}
+Player::Player(int x, int y){
+	this->position = glm::mat4(1.0f);
+    this->x=x;
+    this->y=y;
+    this->target_x=0;
+    this->target_y=0;
+    this->direction=0;
+	this->position = glm::translate(this->position,glm::vec3(x*2-MAX_MAP_SIZE+1, y*2-MAX_MAP_SIZE+1,1.f));
+
+	this->position = glm::rotate(this->position,90.f*PI/180.f,glm::vec3(1.f,0.f,0.f));
+}
+void Player::render(){
+	spLambert->use();
+    if(this->target_x!=0.0f){
+        if(this->target_x<0){
+            this->position = glm::translate(this->position, glm::vec3(-0.2f, 0.0f, 0.0f));
+            this->target_x+=0.2f;
+        }else{
+            this->position = glm::translate(this->position, glm::vec3(0.2f, 0.0f, 0.0f));
+            this->target_x-=0.2f;
+        }
+    }
+    if(this->target_x>-0.2f && this->target_x<0.2f){
+        this->target_x=0;
+    }
+    if(this->target_y!=0.0f){
+        if(this->target_y<0){
+            this->position = glm::translate(this->position, glm::vec3(-0.2f, 0.0f, 0.0f));
+            this->target_y+=0.2f;
+        }else{
+            this->position = glm::translate(this->position, glm::vec3(0.2f, 0.0f, 0.0f));
+            this->target_y-=0.2f;
+        }
+    }
+    if(this->target_y>-0.2f && this->target_y<0.2f){
+        this->target_y=0;
+    }
+
+    glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(position));
+	glUniform4f(spLambert->u("color"), 1, 0.11, 1, 0.8);
+	Models::teapot.drawSolid();	
+}
+void Player::move_forward(int **matrix,std::vector<Crate> &crate){
+    int temp_x=0;
+    int temp_y=0;
+
+    int temp_x_crate=0;
+    int temp_y_crate=0;
+    this->lock=true;
+    switch(this->direction){
+        case 0:
+            temp_x=this->x+1;
+            temp_y=this->y;
+            temp_x_crate=this->x+2;
+            temp_y_crate=this->y;
+            
+            this->target_x+=2.2f;
+            break;
+        case 1:
+            temp_x=this->x;
+            temp_y=this->y-1;
+            temp_x_crate=this->x;
+            temp_y_crate=this->y-2;
+            
+            this->target_y+=2.2f;
+            break;
+        case 2:
+            temp_x=this->x-1;
+            temp_y=this->y;
+            temp_x_crate=this->x-2;
+            temp_y_crate=this->y;
+            
+            this->target_x+=2.2f;
+            break;
+        case 3:
+            temp_x=this->x;
+            temp_y=this->y+1;
+            temp_x_crate=this->x;
+            temp_y_crate=this->y+2;
+            
+            this->target_y+=2.2f;
+            break;
+ 
+    }
+        this->lock=false;
+    
+    if(matrix[temp_x][temp_y]==3){
+        this->target_x=0.f;
+        this->target_y=0.f;
+        return;
+    }
+    if(matrix[temp_x][temp_y]==2){
+        if(matrix[temp_x_crate][temp_x_crate]!=1){
+            this->target_x=0.f;
+            this->target_y=0.f;      
+            return;
+        }else{
+            for(int i=0;i<crate.size();i++){
+                if(crate[i].x==temp_x && crate[i].y==temp_y){
+                    crate[i].move(temp_x_crate,temp_y_crate,matrix);
+                    break;
+                } 
             }
         }
     }
-    return hero;
+    this->x=temp_x;
+    this->y=temp_y;
+	
+}
+void Player::rotate_left(){
+    if(this->direction==0){
+        this->direction=3;
+    }else{
+        this->direction=this->direction-1;
+    }
+	this->position = glm::rotate(this->position,90.0f*PI/180.0f,glm::vec3(0.0f,1.0f,0.0f));	
+}
+void Player::rotate_right(){
+	this->direction=(this->direction+1)%4;
+    this->position = glm::rotate(this->position,-90.0f*PI/180.0f,glm::vec3(0.0f,1.0f,0.0f));	
 }
 
-// int manage_action(sf::Event *event, int **matrix) {
-//     int step_i, step_j, behind_step_i, behind_step_j;
-//     Hero hero = find_hero(matrix);
-//     switch (event->key.code) {
-//         case sf::Keyboard::Left:
-//             step_i = hero.i;
-//             step_j = hero.j - 1;
-//             behind_step_i = hero.i;
-//             behind_step_j = hero.j - 2;
-//             break;
-//         case sf::Keyboard::Right:
-//             step_i = hero.i;
-//             step_j = hero.j + 1;
-//             behind_step_i = hero.i;
-//             behind_step_j = hero.j + 2;
-//             break;
-//         case sf::Keyboard::Up:
-//             step_i = hero.i - 1;
-//             step_j = hero.j;
-//             behind_step_i = hero.i - 2;
-//             behind_step_j = hero.j;
-//             break;
-//         case sf::Keyboard::Down:
-//             step_i = hero.i + 1;
-//             step_j = hero.j;
-//             behind_step_i = hero.i + 2;
-//             behind_step_j = hero.j;
-//             break;
-//     }
 
-//     if(free_place(matrix, hero, step_i, step_j) == 0){
-//         if(move_box(matrix, hero, step_i, step_j, behind_step_i, behind_step_j) == 1){
-//             if(check_win(matrix) == 1){
-//                 return 1;
-//             }
-//         }
-//     }
-//     return 0;
-// }
-
-int free_place(int **matrix, Hero hero, int step_i, int step_j){
-    if(matrix[step_i][step_j] == 1) {
-        matrix[step_i][step_j] = 4;
-        if(hero.target_place == 0){
-            matrix[hero.i][hero.j] = 1;
-        } else {
-            matrix[hero.i][hero.j] = 2;
-        }
-        return 1;
-    } else if(matrix[step_i][step_j] == 2) {
-        matrix[step_i][step_j] = 5;
-        if(hero.target_place == 0){
-            matrix[hero.i][hero.j] = 1;
-        } else {
-            matrix[hero.i][hero.j] = 2;
-        }
-        return 1;
-    } else {
-        return 0;
-    }
+Crate::Crate(){
+	this->position = glm::mat4(1.0f);	
 }
+Crate::Crate(int x, int y){
+    this->x=x;
+    this->y=y;
+    this->target_x=0;
+    this->target_y=0;
+	this->position = glm::mat4(1.0f);
+	this->position = glm::translate(this->position,glm::vec3(this->x*2-MAX_MAP_SIZE+1, this->y*2-MAX_MAP_SIZE+1,1.f));
 
-int move_box(int **matrix, Hero hero, int step_i, int step_j, int behind_step_i, int behind_step_j){
-    if(matrix[step_i][step_j] == 6 && matrix[behind_step_i][behind_step_j] == 1){
-        matrix[behind_step_i][behind_step_j] = 6;
-        matrix[step_i][step_j] = 4;
-        if(hero.target_place == 0){
-            matrix[hero.i][hero.j] = 1;
-        } else {
-            matrix[hero.i][hero.j] = 2;
-        }
-        return 1;
-    } else if(matrix[step_i][step_j] == 6 && matrix[behind_step_i][behind_step_j] == 2) {
-        matrix[behind_step_i][behind_step_j] = 7;
-        matrix[step_i][step_j] = 4;
-        if(hero.target_place == 0){
-            matrix[hero.i][hero.j] = 1;
-        } else {
-            matrix[hero.i][hero.j] = 2;
-        }
-        return 1;
-    } else if(matrix[step_i][step_j] == 7 && matrix[behind_step_i][behind_step_j] == 1) {
-        matrix[behind_step_i][behind_step_j] = 6;
-        matrix[step_i][step_j] = 5;
-        if(hero.target_place == 0){
-            matrix[hero.i][hero.j] = 1;
-        } else {
-            matrix[hero.i][hero.j] = 2;
-        }
-        return 1;
-    }  else if(matrix[step_i][step_j] == 7 && matrix[behind_step_i][behind_step_j] == 2) {
-        matrix[behind_step_i][behind_step_j] = 7;
-        matrix[step_i][step_j] = 5;
-        if(hero.target_place == 0){
-            matrix[hero.i][hero.j] = 1;
-        } else {
-            matrix[hero.i][hero.j] = 2;
-        }
-        return 1;
-    } else {
-        return 0;
-    }
 }
-
-int check_win(int **matrix){
-    for(int i=0; i<12; i++){
-        for(int j=0; j<12; j++){
-            if(matrix[i][j] == 2){
-                return 0;
-            }
+void Crate::move(int x,int y,int **matrix){
+    matrix[this->x][this->y]=1;
+    matrix[x][y]=2;
+    if(x-this->x>0){
+        this->target_x+=2.2f;
+    }
+    if(x-this->x<0){
+        this->target_x+=-2.2f;
+    }
+    if(y-this->y>0){
+        this->target_y+=2.2f;
+    }
+    if(y-this->y<0){
+        this->target_y+=-2.2f;
+    }
+    this->x=x;
+    this->y=y;
+    
+}
+void Crate::render(){
+    spLambert->use();
+    if(this->target_x!=0.0f){
+        if(this->target_x<0){
+            this->position = glm::translate(this->position, glm::vec3(-0.2f, 0.0f, 0.f));
+            this->target_x+=0.2f;
+        }else{
+            this->position = glm::translate(this->position, glm::vec3(0.2f, 0.0f, 0.f));
+            this->target_x-=0.2f;
         }
     }
-    return 1;
+    if(this->target_x>-0.2f && this->target_x<0.2f){
+        this->target_x=0;
+    }
+    if(this->target_y!=0.0f){
+        if(this->target_y<0){
+            this->position = glm::translate(this->position, glm::vec3(0.0f, -0.2f, 0.0f));
+            this->target_y+=0.2f;
+        }else{
+            this->position = glm::translate(this->position, glm::vec3(0.0f, 0.2f, 0.0f));
+            this->target_y-=0.2f;
+        }
+
+    }
+    if(this->target_y>-0.2f && this->target_y<0.2f){
+        this->target_y=0;
+    }
+	
+ //   glm::mat4 temp = glm::translate(this->position,glm::vec3(0.0f,0.0f,1.f));
+    glm::mat4 temp = glm::scale(this->position,glm::vec3(0.65f,0.65f,0.65f));
+	glUniformMatrix4fv(spLambert->u("M"), 1, false, value_ptr(temp));
+	glUniform4f(spLambert->u("color"), 1, 0.11, 1, 0.8);
+	Models::cube.drawSolid();	
 }
