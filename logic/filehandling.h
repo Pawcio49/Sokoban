@@ -2,6 +2,7 @@
 #define OPENGL_GAME_FILEHANDLING_H
 struct File_data {
     int **matrix;
+    int **goals;
     int steps;
     int game_time;
     int correct_file;
