@@ -65,7 +65,7 @@ void initOpenGLProgram(GLFWwindow* window) {
 void freeOpenGLProgram(GLFWwindow *window)
 {
 	glDeleteTextures(2, tex);
-	// delete sp; TODO: Destruktor viewManaging
+	delete sp;
 }
 
 void drawScene(GLFWwindow *window, int **matrix, struct CameraAngle cameraAngle, int **goals)
