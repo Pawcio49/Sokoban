@@ -86,8 +86,8 @@ void drawScene(GLFWwindow *window, int **matrix, struct CameraAngle cameraAngle,
     }
  
 	M = glm::mat4(1.0f);
-	M = glm::rotate(M, -cameraAngle.horizontal*PI/180, glm::vec3(0.0f,1.0f,0.0f));
-	M = glm::rotate(M, -cameraAngle.vertical*PI/180, glm::vec3(1.0f,0.0f,0.0f));
+	//M = glm::rotate(M, -cameraAngle.horizontal*PI/180, glm::vec3(0.0f,1.0f,0.0f));
+	//M = glm::rotate(M, -cameraAngle.vertical*PI/180, glm::vec3(1.0f,0.0f,0.0f));
 
 	glm::mat4 M_copy;
 
