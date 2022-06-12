@@ -1,25 +1,17 @@
 #include <glm/ext/matrix_clip_space.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <vector>
 #define GLM_FORCE_RADIANS
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <stdlib.h>
-#include <stdio.h>
-#include "constants.h"
-#include "allmodels.h"
-#include "lodepng.h"
-#include "shaderprogram.h"
-#include "cmath"
-
+#include "common_header.h"
 #include "logic/filehandling.h"
 #include "logic/movement.h"
 #include "enumeration/worldElements.h"
 #include "camera/camera.h"
 #include "unistd.h"
 #include "ViewManaging.h"
+#include "3D_models.h"
 
 glm::mat4 M;
 Player player;
@@ -30,9 +22,10 @@ float aspectRatio = 1;
 
 struct CameraSpeed cameraSpeed;
 struct CameraAngle cameraAngle;
-
 ShaderProgram *sp;
 GLuint tex[2];
+std::vector<GLuint> model_tex;
+std::vector<Model3D> models_3d;
 
 // Error processing callback procedure
 void error_callback(int error, const char *description)
@@ -59,6 +52,13 @@ void initOpenGLProgram(GLFWwindow* window) {
 
 	tex[0] = viewManaging.readTexture("bricks.png");
 	tex[1] = viewManaging.readTexture("stone-wall.png");
+    Model3D* model = new Model3D("lamp.obj"); 
+    model_tex.push_back(viewManaging.readTexture("lampa.png"));
+    model_tex.push_back(viewManaging.readTexture("venom.png"));
+    models_3d.push_back(*model);
+    model = new Model3D("venom.obj"); 
+    models_3d.push_back(*model);
+
 }
 
 // Release resources allocated by the program
@@ -79,15 +79,15 @@ void drawScene(GLFWwindow *window, int **matrix, struct CameraAngle cameraAngle,
 
 
 	if(!player.lock){
-        player.render(cameraAngle);
+        player.render(cameraAngle,models_3d.at(1));
         for(int i=0;i<crate.size();i++){
 		    crate[i].render();
 	    }
     }
  
 	M = glm::mat4(1.0f);
-	//M = glm::rotate(M, -cameraAngle.horizontal*PI/180, glm::vec3(0.0f,1.0f,0.0f));
-	//M = glm::rotate(M, -cameraAngle.vertical*PI/180, glm::vec3(1.0f,0.0f,0.0f));
+	M = glm::rotate(M, -cameraAngle.horizontal*PI/180, glm::vec3(0.0f,1.0f,0.0f));
+	M = glm::rotate(M, -cameraAngle.vertical*PI/180, glm::vec3(1.0f,0.0f,0.0f));
 
 	glm::mat4 M_copy;
 
@@ -95,6 +95,13 @@ void drawScene(GLFWwindow *window, int **matrix, struct CameraAngle cameraAngle,
 		for(int j=0; j<MAX_MAP_SIZE; j++){
 			M_copy = M;
 			M_copy = glm::translate(M, glm::vec3(i * 2 - MAX_MAP_SIZE + 1, j * 2 - MAX_MAP_SIZE + 1, 0.0f));
+            if((i==0 && j==0)||(i==11&j==11)||(i==0&&j==11)||(i==11&&j==0)){
+                glm::mat4 temp = glm::rotate(M_copy, 90*PI/180, glm::vec3(1.0f,0.0f,0.0f));
+                temp = glm::translate(temp, glm::vec3(0.f,3.f, 0.0f));
+                temp = glm::scale(temp, glm::vec3(3.f,3.f,3.f));
+			    viewManaging.setM(temp);
+                models_3d.at(0).render(sp, model_tex.at(0));
+            }
 			viewManaging.setM(M_copy);
 
 			switch (matrix[i][j])
@@ -103,19 +110,23 @@ void drawScene(GLFWwindow *window, int **matrix, struct CameraAngle cameraAngle,
 			case worldElements::FLOOR:
 				viewManaging.setAttrib(tex[1]);
 				break;
-			case worldElements::WALL:
+            case worldElements::WALL:
 				viewManaging.setAttrib(tex[0]);
 				M_copy = glm::translate(M_copy, glm::vec3(0.0f, 0.0f, 2.0f));
 				viewManaging.setM(M_copy);
 				viewManaging.setAttrib(tex[0]);
 				break;
-			}
+			
+                }
+            
+            
             switch(goals[i][j]){
                 case 1:
-                    M_copy = glm::translate(M, glm::vec3(0.f,0.f, 0.8f));
+                    M_copy = glm::translate(M, glm::vec3(0.f,0.f, 1.0f));
 					viewManaging.setM(M_copy);
 				break;
             }
+            
 		}
 	}
 

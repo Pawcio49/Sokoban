@@ -19,9 +19,9 @@ out vec4 l[4];
 out float d[4];
 
 void main(void) {
-    float lightHigh = 7;
-    float corner = 9;
-    float lightMaxDistance = 20;
+    float lightHigh = 9;
+    float corner = 11;
+    float lightMaxDistance = 28;
 
     vec4 lp[4];
     lp[0] = vec4(-corner, -corner, lightHigh, 1);

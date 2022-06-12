@@ -1,12 +1,14 @@
 #include "movement.h"
+#include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
-
+#include <glm/fwd.hpp>
+#include "../common_header.h"
 Player::Player(){
 	this->position = glm::mat4(1.0f);
 }
 Player::Player(ShaderProgram *sp, int x, int y){
     this->viewManaging.setSp(sp);
-    this->tex = viewManaging.readTexture("bricks.png");
+    this->tex = viewManaging.readTexture("venom.png");
 	this->position = glm::mat4(1.0f);
     this->x=x;
     this->y=y;
@@ -17,8 +19,7 @@ Player::Player(ShaderProgram *sp, int x, int y){
 
 	this->position = glm::rotate(this->position,90.f*PI/180.f,glm::vec3(1.f,0.f,0.f));
 }
-void Player::render(struct CameraAngle cameraAngle){
-    this->viewManaging.spUse();
+void Player::render(struct CameraAngle cameraAngle,Model3D model){    this->viewManaging.spUse();
     //TODO: skorzystaj z cameraAngle przy zmianie pozycji (tak jak w main_file)
     if(this->target_x!=0.0f){
         if(this->target_x<0){
@@ -45,11 +46,17 @@ void Player::render(struct CameraAngle cameraAngle){
         this->target_y=0;
     }
 
-    viewManaging.setM(position);
+    //viewManaging.setM(position);
+    glm::mat4 M = glm::rotate(position, 90*PI/180, glm::vec3(0.0f,1.0f,0.0f));
+    M= glm::scale(M,glm::vec3(0.03f,0.03f,0.03f));
+    M = glm::translate(M, glm::vec3(0.0f,0.0f,25.f));
+    M = glm::translate(M, glm::vec3(0.0f,1.0f,0.f));
+    glUniformMatrix4fv(this->viewManaging.sp->u("M"), 1, false, value_ptr(M));
     // glUniformMatrix4fv(sp->u("M"), 1, false, value_ptr(position));
 	// glUniform4f(sp->u("color"), 1, 0.11, 1, 0.8);
 	//Models::teapot.drawSolid();
-    viewManaging.setAttrib(tex);	
+    //viewManaging.setAttrib(tex);
+    model.render(this->viewManaging.sp,this->tex);
 }
 void Player::move_forward(int **matrix,std::vector<Crate> &crate){
     int temp_x=0;

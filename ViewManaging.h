@@ -17,7 +17,6 @@
 
 class ViewManaging{
     private:
-        ShaderProgram *sp;
         glm::mat4 M;
         glm::mat4 V;
         glm::mat4 P;
@@ -26,6 +25,7 @@ class ViewManaging{
         float *texCoords;
         int vertexCount;
     public:
+        ShaderProgram *sp;
         void setSp(ShaderProgram *sp);
         GLuint readTexture(const char* filename);
         void setAttrib(GLuint tex);

@@ -11,7 +11,8 @@
 #include "../lodepng.h"
 #include "../ViewManaging.h"
 #include "../camera/camera.h"
-
+#include "../3D_models.h"
+#include "../common_header.h"
 
 #ifndef OPENGL_GAME_MOVEMENT_H
 #define OPENGL_GAME_MOVEMENT_H
@@ -46,7 +47,7 @@ class Player{
 
     Player();
 	Player(ShaderProgram *sp, int x, int y);
-	void render(struct CameraAngle cameraAngle);
+	void render(struct CameraAngle cameraAngle, Model3D model);
 	void move_forward(int **matrix,std::vector<Crate> &crate);
 	void rotate_left();
 	void rotate_right();
