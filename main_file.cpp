@@ -51,8 +51,8 @@ void initOpenGLProgram(GLFWwindow* window) {
 	sp=new ShaderProgram("v_simplest.glsl",NULL,"f_simplest.glsl");
 	viewManaging.setSp(sp);
 
-	tex[0] = viewManaging.readTexture("bricks.png");
-	tex[1] = viewManaging.readTexture("stone-wall.png");
+	tex[0] = viewManaging.readTexture("bricks2.png");
+	tex[1] = viewManaging.readTexture("stone-wall2.png");
 	tex[2] = viewManaging.readTexture("target.png");
     Model3D* model = new Model3D("lamp.obj"); 
     model_tex.push_back(viewManaging.readTexture("lampa.png"));
@@ -116,28 +116,44 @@ void drawScene(GLFWwindow *window, int **matrix, struct CameraAngle cameraAngle,
 				viewManaging.setM(M_copy);
 				viewManaging.setAttrib(tex[0]);
 				break;
-			
+		
                 }
             
             
             switch(goals[i][j]){
                 case 1:
-                    glUniform1i(sp->u("textureMap0"), 0);
+                    //glUniform1i(sp->u("textureMap0"), 0);
 
                     M_copy = glm::translate(M_copy, glm::vec3(0.f,0.f, 1.f));
                    //M_copy = glm::scale(M_copy, glm::vec3(0.5f,0.5f,0.5f));
-					viewManaging.setM(M_copy);
-                    glActiveTexture(GL_TEXTURE0);
-	                glBindTexture(GL_TEXTURE_2D, tex[2]);
+				    viewManaging.setM(M_copy);
+					viewManaging.setAttribTorus(tex[2]);
 
-                   Models::torus.drawSolid();
+					// viewManaging.setM(M_copy);
+                    // glActiveTexture(GL_TEXTURE0);
+	                // glBindTexture(GL_TEXTURE_2D, tex[2]);
+
+
+                //    Models::torus.drawSolid();
 				break;
             }
-            
+		}
+	}
+
+	bool endGame = true;
+	for(int i=0; i<MAX_MAP_SIZE; i++){
+		for(int j=0; j<MAX_MAP_SIZE; j++){
+			if(goals[i][j] == 1 && matrix[i][j] != 2){
+				endGame = false;
+			}
 		}
 	}
 
 	glfwSwapBuffers(window);
+
+	if(endGame==true){
+		exit(0);
+	}
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {

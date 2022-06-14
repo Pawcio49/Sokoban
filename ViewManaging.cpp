@@ -45,6 +45,29 @@ void ViewManaging::setAttrib(GLuint tex){
 	glDisableVertexAttribArray(sp->a("texCoord0"));
 }
 
+void ViewManaging::setAttribTorus(GLuint tex){
+	Models::Torus torus;
+
+	glUniform1i(sp->u("textureMap0"), 0);
+
+	glEnableVertexAttribArray(sp->a("vertex"));
+    glVertexAttribPointer(sp->a("vertex"), 4, GL_FLOAT, false, 0, torus.vertices);
+
+	glEnableVertexAttribArray(sp->a("normal"));
+    glVertexAttribPointer(sp->a("normal"), 4, GL_FLOAT, false, 0, torus.normals);
+
+	glEnableVertexAttribArray(sp->a("texCoord0"));
+    glVertexAttribPointer(sp->a("texCoord0"), 2, GL_FLOAT, false, 0, torus.texCoords);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tex);
+
+    glDrawArrays(GL_TRIANGLES, 0, torus.vertexCount);
+	glDisableVertexAttribArray(sp->a("vertex"));
+	glDisableVertexAttribArray(sp->a("normal"));
+	glDisableVertexAttribArray(sp->a("texCoord0"));
+}
+
 void ViewManaging::spUse(){
     sp->use();
 }
@@ -59,8 +82,4 @@ void ViewManaging::setPAndV(struct CameraAngle cameraAngle){
 
 void ViewManaging::setM(glm::mat4 M){
     glUniformMatrix4fv(sp->u("M"), 1, false, value_ptr(M));
-}
-
-void ViewManaging::setVertices(float *vertices){
-	this->vertices = vertices;
 }

@@ -25,6 +25,6 @@ const int MAX_MAP_SIZE = 12;
 const float RIGHT_ANGLE = 90.0f;
 const float CAMERA_ROTATE_SPEED = 30.0f;
 const float CAMERA_ZOOM_SPEED = 10.0f;
-const float STARTING_CAMERA_ZOOM = 40.0f;
+const float STARTING_CAMERA_ZOOM = 35.0f;
 
 #endif

@@ -14,6 +14,7 @@
 #include "lodepng.h"
 #include "shaderprogram.h"
 #include "camera/camera.h"
+#include "torus.h"
 
 
 class ViewManaging{
@@ -21,19 +22,15 @@ class ViewManaging{
         glm::mat4 M;
         glm::mat4 V;
         glm::mat4 P;
-        float *vertices;
-        float *normals;
-        float *texCoords;
-        int vertexCount;
     public:
         ShaderProgram *sp;
         void setSp(ShaderProgram *sp);
         GLuint readTexture(const char* filename);
         void setAttrib(GLuint tex);
+        void setAttribTorus(GLuint tex);
         void spUse();
         void setPAndV(struct CameraAngle CameraAngle);
         void setM(glm::mat4 M);
-        void setVertices(float *vertices);
 };
 
 #endif
