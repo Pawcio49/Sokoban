@@ -1,3 +1,4 @@
+#include "torus.h"
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/vector_float3.hpp>
@@ -23,7 +24,7 @@ float aspectRatio = 1;
 struct CameraSpeed cameraSpeed;
 struct CameraAngle cameraAngle;
 ShaderProgram *sp;
-GLuint tex[2];
+GLuint tex[3];
 std::vector<GLuint> model_tex;
 std::vector<Model3D> models_3d;
 
@@ -52,6 +53,7 @@ void initOpenGLProgram(GLFWwindow* window) {
 
 	tex[0] = viewManaging.readTexture("bricks.png");
 	tex[1] = viewManaging.readTexture("stone-wall.png");
+	tex[2] = viewManaging.readTexture("target.png");
     Model3D* model = new Model3D("lamp.obj"); 
     model_tex.push_back(viewManaging.readTexture("lampa.png"));
     model_tex.push_back(viewManaging.readTexture("venom.png"));
@@ -120,8 +122,15 @@ void drawScene(GLFWwindow *window, int **matrix, struct CameraAngle cameraAngle,
             
             switch(goals[i][j]){
                 case 1:
-                    M_copy = glm::translate(M, glm::vec3(0.f,0.f, 1.0f));
+                    glUniform1i(sp->u("textureMap0"), 0);
+
+                    M_copy = glm::translate(M_copy, glm::vec3(0.f,0.f, 1.f));
+                   //M_copy = glm::scale(M_copy, glm::vec3(0.5f,0.5f,0.5f));
 					viewManaging.setM(M_copy);
+                    glActiveTexture(GL_TEXTURE0);
+	                glBindTexture(GL_TEXTURE_2D, tex[2]);
+
+                   Models::torus.drawSolid();
 				break;
             }
             
