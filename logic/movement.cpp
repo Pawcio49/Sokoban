@@ -126,7 +126,7 @@ void Player::move_forward(int **matrix,std::vector<Crate> &crate){
 	
 }
 void Player::rotate_left(){
-    if(this->lock){
+    if(this->target_x>0 || this-> target_y>0){
         return;
     }
     if(this->direction==0){
@@ -137,7 +137,7 @@ void Player::rotate_left(){
 	this->position = glm::rotate(this->position,90.0f*PI/180.0f,glm::vec3(0.0f,1.0f,0.0f));	
 }
 void Player::rotate_right(){
-    if(this->lock){
+     if(this->target_x>0 || this-> target_y>0){
         return;
     }
 	this->direction=(this->direction+1)%4;
