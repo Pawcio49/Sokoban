@@ -150,13 +150,13 @@ Crate::Crate(){
 }
 Crate::Crate(ShaderProgram *sp, int x, int y){
     this->viewManaging.setSp(sp);
-    this->tex = viewManaging.readTexture("bricks.png");
+    this->tex = viewManaging.readTexture("box.png");
     this->x=x;
     this->y=y;
     this->target_x=0;
     this->target_y=0;
 	this->position = glm::mat4(1.0f);
-	this->position = glm::translate(this->position,glm::vec3(this->x*2-MAX_MAP_SIZE+1, this->y*2-MAX_MAP_SIZE+1,1.f));
+	this->position = glm::translate(this->position,glm::vec3(this->x*2-MAX_MAP_SIZE+1, this->y*2-MAX_MAP_SIZE+1,2.0f));
 
 }
 void Crate::move(int x,int y,int **matrix){

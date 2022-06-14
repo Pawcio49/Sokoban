@@ -13,6 +13,7 @@
 #include "allmodels.h"
 #include "lodepng.h"
 #include "shaderprogram.h"
+#include "camera/camera.h"
 
 
 class ViewManaging{
@@ -30,7 +31,7 @@ class ViewManaging{
         GLuint readTexture(const char* filename);
         void setAttrib(GLuint tex);
         void spUse();
-        void setPAndV(float cameraZoom);
+        void setPAndV(struct CameraAngle CameraAngle);
         void setM(glm::mat4 M);
         void setVertices(float *vertices);
 };
